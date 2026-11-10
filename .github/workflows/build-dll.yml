@@ -1,0 +1,32 @@
+name: Build ETS2 Smart View telemetry DLL
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/**'
+      - 'sdk/**'
+      - '.github/workflows/build-dll.yml'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify SDK headers
+        shell: pwsh
+        run: |
+          if (!(Test-Path 'sdk/include/scssdk_telemetry.h')) {
+            throw 'SCS SDK headers are missing. Add the SDK include folder under sdk/include.'
+          }
+      - name: Build x64 DLL
+        shell: pwsh
+        run: |
+          msbuild src/smartview_telemetry.vcxproj /m /p:Configuration=Release /p:Platform=x64
+      - name: Upload DLL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smartview-telemetry-win-x64
+          path: build/smartview_telemetry.dll
+          if-no-files-found: error
+          retention-days: 14
